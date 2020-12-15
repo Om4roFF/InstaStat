@@ -1,77 +1,94 @@
+import datetime
 import time
 import os
 import tempfile
-from flask import Flask, send_file, send_from_directory, request
+from flask import Flask, send_file, send_from_directory, request, jsonify, url_for, redirect
 from PIL import ImageFont
 import json
+
+from config import path_main
 from full_stat import second_img
 from photo_builder import bright, input_photo, input_labels, input_stats, input_logo
 from draw_image import draw_name, draw_like, draw_comment, draw_share, draw_notes, draw_visits, draw_coverage
-from photo_builder import img
+from PIL import Image
 
 font1 = ImageFont.truetype('FontsFree-Net-arial-bold.ttf', 28)
 font2 = ImageFont.truetype("arial.ttf", 42)
 font3 = ImageFont.truetype("arial.ttf", 32)
+UPLOAD_FOLDER = '/home/user/InstaStat/media'
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
-@app.route('/get_image1', methods=['POST', 'GET'])
+@app.route('/get_image', methods=['POST'])
 def home():
     json_string = request.stream.read().decode('utf-8').strip()
     a = json.loads(json_string.strip())
-    url = a['url']
-    type = a['type']
+    print(a)
+    carousel_count = ''
+    video_duration = ''
+    if 'carousel_count' in a:
+        carousel_count = a['carousel_count']
+    if 'video_duration' in a:
+        video_duration = a['video_duration']
+
+    for key, value in a.items():
+        if value is None:
+            a[key] = 'Недоступно'
+    url = a['url_poster']
+    type = a['media_type']
     likes = a['likes']
     comments = a['comments']
     shares = a['shares']
-    notes = a['notes']
-    visits = a['visits']
-    coverage = a['coverage']
-    name = a['name']
+    notes = a['saves']
+    profile_view = a['profile_view']
+    reach = a['reach']
+    username = a['username']
     logo = a['logo']
-    main_img(url, type, likes, comments, shares, notes, visits, coverage, name, logo)
-    time.sleep(6)
-    return send_file(filename_or_fp='media/ws1.jpg', mimetype='image/jpg')
+    subscribes = a['subscribes']
+    impressions = a['impressions']
+    reach_not_follower = a['reach_not_follower']
+    impressions_from_feed = a['impressions_from_feed']
+    file_name_main = main_img(url, type, likes, comments, shares, notes, profile_view, reach, username, logo,
+                              carousel_count, video_duration)
+    file_name_stat = second_img(profile_view=profile_view, reach=reach, sub=subscribes, impressions=impressions,
+                                account=username, reach_not_follower=reach_not_follower, page=impressions_from_feed)
+    x = {
+        'url1': send_file_url(file_name_main),
+        'url2': send_file_url(file_name_stat)
+    }
+    json_r = json.dumps(x)
+    print(json_r)
+    return jsonify(json_r)
 
 
-def main_img(url, type, likes, comments, shares, notes, visits, coverages, name, logo):
-    y = input_photo(0, 200, url, type)
-    input_labels(0, y)
-    draw_name(140, font1, name, 'black')
-    input_logo(80, logo)
-    bright(0.7)
-    input_stats()
+def main_img(url, type, likes, comments, shares, notes, visits, coverages, username, logo, carousel_count, video_duration):
+    img = Image.open(path_main)
+    y = input_photo(img, 0, 200, url, type, carousel_count, video_duration)
+    input_labels(img, 0, y)
+    draw_name(img, 140, font1, username, 'black')
+    input_logo(img, 80, logo)
+    bright(img, 0.7)
+    input_stats(img)
     height_of_content = 980
     height_of_vc = 1105
-    draw_like(height_of_content, font3, likes)
-    draw_comment(height_of_content, font3, comments)
-    draw_share(height_of_content, font3, shares)
-    draw_notes(height_of_content, font3, notes)
-    draw_visits(height_of_vc, font2, visits)
-    draw_coverage(height_of_vc, font2, coverages)
-    w, h = img.size
-    print(w, h)
-    tf = tempfile.NamedTemporaryFile()
-    file_name = tf.name
-    img.save('media/ws1.jpg')
+    draw_like(img, height_of_content, font3, likes)
+    draw_comment(img, height_of_content, font3, comments)
+    draw_share(img, height_of_content, font3, shares)
+    draw_notes(img, height_of_content, font3, notes)
+    draw_visits(img, height_of_vc, font3, visits)
+    draw_coverage(img, height_of_vc, font3, coverages)
+    now = datetime.datetime.now()
+    file_name = now.strftime('%d%m%y_%H%M%S') + 'page1_' + username + '.jpg'
+    img.save(f'static/media/{file_name}')
+    return file_name
 
 
-@app.route('/get_image2', methods=['GET', 'POST'])
-def second():
-    json_string = request.stream.read().decode('utf-8').strip()
-    a = json.loads(json_string.strip())
-    interaction = a['interaction']
-    visits = a['visits']
-    interest = a['interest']
-    sub = a['subscribers']
-    coverage = a['coverage']
-    screenings = a['screenings']
-    page = a['pages']
-    account = a['account']
-    second_img(interaction, visits, interest, sub, coverage, screenings, page, account, '31%')
-    time.sleep(6)
-    return send_file(filename_or_fp='media/ws2.jpg', mimetype='image/jpg')
+def send_file_url(file_name):
+    url = url_for('static', filename='media/'+file_name)
+    full_url = 'http://192.168.88.41:5000'+url
+    return full_url
 
 
 @app.route('/nurs', methods=['GET'])
@@ -80,10 +97,4 @@ def hello():
 
 
 if __name__ == '__main__':
-    app.run(debug=False)
-
-
-# second_img(31,62,13,2,1,2,1,'31','31')
-# main_img('https://media.wired.com/photos/598e35fb99d76447c4eb1f28/master/pass/phonepicutres-TA.jpg', 'video.png',
-#          1231, 324, 655, 777, 81, 38, 'facebook',
-#          'https://i.pinimg.com/originals/72/a3/d9/72a3d9408d41335f39e9f014dc35cf44.jpg')
+    app.run(host='0.0.0.0')
