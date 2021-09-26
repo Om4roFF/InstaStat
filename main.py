@@ -2,7 +2,7 @@ import datetime
 import time
 import os
 import tempfile
-from flask import Flask, send_file, send_from_directory, request, jsonify, url_for, redirect
+from flask import Flask, request, jsonify, url_for
 from PIL import ImageFont
 import json
 
@@ -24,6 +24,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 @app.route('/get_image', methods=['POST'])
 def home():
     json_string = request.stream.read().decode('utf-8').strip()
+    print(app.config)
     a = json.loads(json_string.strip())
     print(a)
     carousel_count = ''
@@ -66,9 +67,10 @@ def home():
 def main_img(url, type, likes, comments, shares, notes, visits, coverages, username, logo, carousel_count, video_duration):
     img = Image.open(path_main)
     y = input_photo(img, 0, 200, url, type, carousel_count, video_duration)
+    print('Y = ' + str(y))
     input_labels(img, 0, y)
     draw_name(img, 140, font1, username, 'black')
-    input_logo(img, 80, logo)
+    input_logo(img, logo)
     bright(img, 0.7)
     input_stats(img)
     height_of_content = 980
@@ -80,15 +82,32 @@ def main_img(url, type, likes, comments, shares, notes, visits, coverages, usern
     draw_visits(img, height_of_vc, font3, visits)
     draw_coverage(img, height_of_vc, font3, coverages)
     now = datetime.datetime.now()
-    file_name = now.strftime('%d%m%y_%H%M%S') + 'page1_' + username + '.jpg'
+    file_name = 'result1.jpg'
+    # file_name = now.strftime('%d%m%y_%H%M%S') + 'page1_' + username + '.jpg'
+    os.remove(f'static/media/{file_name}')
+    time.sleep(1)
     img.save(f'static/media/{file_name}')
     return file_name
 
 
 def send_file_url(file_name):
     url = url_for('static', filename='media/'+file_name)
+    # full_url = 'http://api.galamat.biz:5000'+url
     full_url = 'http://192.168.88.41:5000'+url
     return full_url
+
+
+@app.after_request
+def add_header(r):
+    """
+    Add headers to both force latest IE rendering engine or Chrome Frame,
+    and also to cache the rendered page for 10 minutes.
+    """
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    r.headers['Cache-Control'] = 'public, max-age=0'
+    return r
 
 
 @app.route('/nurs', methods=['GET'])

@@ -1,4 +1,7 @@
 import datetime
+import os
+import time
+
 from PIL import Image, ImageDraw, ImageFont
 from config import path_full_stat
 from draw_image import separation
@@ -10,7 +13,7 @@ def clear():
         for j in range(310, 370):
             img.putpixel((i, j), (255, 255, 255))
 
-    for i in range(300, 700):
+    for i in range(300, 714):
         for j in range(450, 550):
             img.putpixel((i, j), (255, 255, 255))
 
@@ -38,7 +41,7 @@ def clear():
         for j in range(820, 860):
             img.putpixel((i, j), (255, 255, 255))
 
-    for i in range(0, 130):
+    for i in range(0, 136):
         for j in range(820, 860):
             img.putpixel((i, j), (255, 255, 255))
 
@@ -169,11 +172,11 @@ def draw_percent(height_of_percent, font, percent, fill):
     if len(str(percent)) == 1:
         width = 10
     elif len(str(percent)) == 2:
-        width = 88
+        width = 95
     elif len(str(percent)) == 3:
         width = 83
     else:
-        width = 80
+        width = 75
     draw.text((width, height_of_percent), str(percent), font=font, fill=(155, 155, 155))
 
 
@@ -181,12 +184,13 @@ def second_img(profile_view, reach, sub, impressions, page, account, reach_not_f
     font1 = ImageFont.truetype("arial.ttf", 32)
     font = ImageFont.truetype("arial.ttf", 28)
     font5 = ImageFont.truetype("arial.ttf", 27)
-    font2 = ImageFont.truetype("arial.ttf", 42)
     font3 = ImageFont.truetype("arial.ttf", 52)
     font6 = ImageFont.truetype("arial.ttf", 24)
     if reach_not_follower is not None and reach is not None:
         percent = (reach_not_follower*100)/reach
         percent = int(percent)
+        if percent > 100:
+            percent = 100
     else:
         percent = 5
     percent = str(percent) + '%'
@@ -195,12 +199,15 @@ def second_img(profile_view, reach, sub, impressions, page, account, reach_not_f
     draw_visits_full(484, font1, profile_view)
     draw_interest(700, font3, reach)
     draw_coverage(998, font1, reach, 'black')
-    draw_coverage(1080, font1, sub, 'black')
-    draw_coverage(918, font1, impressions, 'black')
+    draw_coverage(1080, font1, impressions, 'black')
+    draw_coverage(918, font1, sub, 'black')
     draw_coverage(1135, font5, page, 'gray')
     draw_account(818, font, account, 'gray')
     draw_percent(822, font6, percent, 'gray')
     now = datetime.datetime.now()
-    file_name = now.strftime('%d%m%y_%H%M%S_') + 'page2_' + account + '.jpg'
+    # file_name = now.strftime('%d%m%y_%H%M%S_') + 'page2_' + account + '.jpg'
+    file_name = 'result2.jpg'
+    os.remove(f'static/media/{file_name}')
+    time.sleep(1)
     img.save(f'static/media/{file_name}')
     return file_name

@@ -147,21 +147,21 @@ def draw_coverage(img, height_of_coverage, font, coverage):
     else:
         coverage = separation(str(coverage))
         if len(str(coverage)) == 1:
-            width_of_coverage = 527
+            width_of_coverage = 535
         elif len(str(coverage)) == 2:
-            width_of_coverage = 520
+            width_of_coverage = 530
         elif len(str(coverage)) == 3:
-            width_of_coverage = 505
+            width_of_coverage = 520
         elif len(str(coverage)) == 4:
-            width_of_coverage = 495
+            width_of_coverage = 510
         elif len(str(coverage)) == 5:
-            width_of_coverage = 490
+            width_of_coverage = 500
         elif len(str(coverage)) == 6:
-            width_of_coverage = 475
+            width_of_coverage = 490
         elif len(str(coverage)) == 7:
-            width_of_coverage = 465
+            width_of_coverage = 480
         else:
-            width_of_coverage = 455
+            width_of_coverage = 470
     draw.text((width_of_coverage, height_of_coverage), str(coverage), font=font, fill='black')
 
 

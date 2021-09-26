@@ -4,33 +4,40 @@ import time
 
 import requests
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
-from config import path_main, path_igtv, path_content, path_stat, path_logo, path_video, path_carousel
+from config import path_igtv, path_content, path_stat, path_video, path_carousel
+from config import log
+logger = log()
 
 
 def input_photo(img, paste_width, paste_high, url, type, carousel_count, video_duration):
-    myfile = requests.get(url)
-    open(f'static/media/1.png', 'wb').write(myfile.content)
-    time.sleep(2)
-    photo = Image.open('static/media/1.png').convert("RGBA")
-    w, h = photo.size
-    print(w, h)
-    y = h
-    resized_img = ''
-    if 720 >= w:
-        value = 720 - w
-        y += value
-        size = (720, int(y))
-        resized_img = photo.resize(size)
-        resized_img = media_type_small(type, y, resized_img, video_duration, carousel_count)
-    elif 720 < w:
-        y = (h * 720) / w
-        if y < 410:
-            y = 410
-        size = (720, int(y))
-        resized_img = photo.resize(size)
-        resized_img = media_type_large(type, y, resized_img, video_duration, carousel_count)
-    img.paste(resized_img, (paste_width, paste_high))
-    return h + paste_high
+    try:
+        logger.info('input_photo')
+        myfile = requests.get(url)
+        open(f'static/media/1.png', 'wb').write(myfile.content)
+        time.sleep(2)
+        photo = Image.open('static/media/1.png').convert("RGBA")
+        w, h = photo.size
+        print(w, h)
+        y = h
+        resized_img = ''
+        if 720 >= w:
+            value = 720 - w
+            y += value
+            size = (720, int(y))
+            resized_img = photo.resize(size)
+            resized_img = media_type_small(type, y, resized_img, video_duration, carousel_count)
+        elif 720 < w:
+            y = (h * 720) / w
+            if y < 410:
+                y = 410
+            size = (720, int(y))
+            resized_img = photo.resize(size)
+            resized_img = media_type_large(type, y, resized_img, video_duration, carousel_count)
+        x, y = resized_img.size
+        img.paste(resized_img, (paste_width, paste_high))
+        return y + paste_high
+    except Exception as e:
+        logger.info(e)
 
 
 def media_type_small(type_of_media, y, image, video_duration, count):
@@ -52,7 +59,7 @@ def media_type_large(type_of_media, y, image, video_duration, count):
         if video_duration != '':
             draw_video_duration(video_duration, image)
     elif type_of_media == 'carousel':
-        if count!='':
+        if count != '':
             draw_carousel(count, image)
     return image
 
@@ -71,7 +78,7 @@ def input_video_logo(paste_width, paste_high, image):
     image.paste(resized_logo, (paste_width, paste_high), resized_logo)
 
 
-def input_logo(img, height_of_logo, path):
+def input_logo(img, path):
     for i in range(25, 95):
         for j in range(120, 185):
             img.putpixel((i, j), (255, 255, 255))
@@ -152,7 +159,7 @@ def crop(im, s):
 
 
 def ReduceOpacity(im, opacity):
-    assert opacity >= 0 and opacity <= 1
+    assert 0 <= opacity <= 1
     if im.mode != 'RGBA':
         im = im.convert('RGBA')
     else:
